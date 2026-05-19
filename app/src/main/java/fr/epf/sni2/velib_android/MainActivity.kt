@@ -25,8 +25,8 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import fr.epf.sni2.velib_android.ui.navigation.Routes
 import fr.epf.sni2.velib_android.ui.screens.FavoritesScreen
-import fr.epf.sni2.velib_android.ui.screens.MapScreen
 import fr.epf.sni2.velib_android.ui.screens.NearbyScreen
+import fr.epf.sni2.velib_android.ui.screens.map.MapScreen
 import fr.epf.sni2.velib_android.ui.theme.VelibTheme
 
 @AndroidEntryPoint
