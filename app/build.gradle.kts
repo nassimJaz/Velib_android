@@ -13,8 +13,8 @@ android {
 
     defaultConfig {
         applicationId = "fr.epf.sni2.velib_android"
-        minSdk = 34
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -73,6 +74,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
+
+    // Theme XML
+    implementation(libs.material)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
