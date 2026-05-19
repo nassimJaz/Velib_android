@@ -1,6 +1,7 @@
 package fr.epf.sni2.velib_android.ui.screens.map
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -23,15 +24,24 @@ fun MapScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
-            is MapUiState.Loading -> CircularProgressIndicator()
-            is MapUiState.Success -> Text(
-                text = "${state.stations.size} stations Vélib' chargées",
-                style = MaterialTheme.typography.headlineSmall,
+            is MapUiState.Loading -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+
+            is MapUiState.Success -> OsmMapView(
+                stations = state.stations,
+                modifier = Modifier.fillMaxSize(),
             )
-            is MapUiState.Error -> androidx.compose.foundation.layout.Column(
+
+            is MapUiState.Error -> Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
             ) {
                 Text("Erreur : ${state.message}", color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(16.dp))
