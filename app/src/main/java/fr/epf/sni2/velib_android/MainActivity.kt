@@ -26,9 +26,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import fr.epf.sni2.velib_android.ui.navigation.Routes
-import fr.epf.sni2.velib_android.ui.screens.FavoritesScreen
 import fr.epf.sni2.velib_android.ui.screens.NearbyScreen
 import fr.epf.sni2.velib_android.ui.screens.detail.DetailScreen
+import fr.epf.sni2.velib_android.ui.screens.favorites.FavoritesScreen
 import fr.epf.sni2.velib_android.ui.screens.map.MapScreen
 import fr.epf.sni2.velib_android.ui.theme.VelibTheme
 
@@ -88,7 +88,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable(Routes.FAVORITES) { FavoritesScreen() }
+                        composable(Routes.FAVORITES) {
+                            FavoritesScreen(
+                                onStationClick = { stationId ->
+                                    navController.navigate(Routes.detail(stationId))
+                                }
+                            )
+                        }
                         composable(Routes.NEARBY) { NearbyScreen() }
                         composable(
                             route = Routes.DETAIL,
