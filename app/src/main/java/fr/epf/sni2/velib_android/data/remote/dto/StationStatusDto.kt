@@ -5,14 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class StationStatusDto(
-    @SerialName("station_id") val stationId: String,
-    @SerialName("num_bikes_available") val numBikesAvailable: Int,
+    @SerialName("station_id") val stationId: Long,
+    @SerialName("num_bikes_available") val numBikesAvailable: Int = 0,
     @SerialName("num_bikes_available_types") val numBikesAvailableTypes: List<Map<String, Int>> = emptyList(),
-    @SerialName("num_docks_available") val numDocksAvailable: Int,
-    @SerialName("is_installed") val isInstalled: Int,
-    @SerialName("is_renting") val isRenting: Int,
-    @SerialName("is_returning") val isReturning: Int,
-    @SerialName("last_reported") val lastReported: Long,
+    @SerialName("num_docks_available") val numDocksAvailable: Int = 0,
+    @SerialName("is_installed") val isInstalled: Int = 0,
+    @SerialName("is_renting") val isRenting: Int = 0,
+    @SerialName("is_returning") val isReturning: Int = 0,
+    @SerialName("last_reported") val lastReported: Long = 0,
 ) {
     val mechanicalBikes: Int
         get() = numBikesAvailableTypes.firstOrNull { it.containsKey("mechanical") }?.get("mechanical") ?: 0

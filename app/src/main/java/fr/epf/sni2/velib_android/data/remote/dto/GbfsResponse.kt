@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GbfsResponse<T>(
-    @SerialName("last_updated") val lastUpdated: Long,
-    val ttl: Int,
+    @SerialName("lastUpdatedOther") val lastUpdated: Long = 0,
+    val ttl: Int = 0,
     val data: T,
 )
 

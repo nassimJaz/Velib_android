@@ -37,7 +37,7 @@ class StationRepository @Inject constructor(
     }
 
     private fun merge(info: StationInformationDto, status: StationStatusDto): Station = Station(
-        id = info.stationId,
+        id = info.stationId.toString(),
         name = info.name,
         stationCode = info.stationCode,
         lat = info.lat,

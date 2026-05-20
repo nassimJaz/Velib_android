@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class StationInformationDto(
-    @SerialName("station_id") val stationId: String,
+    @SerialName("station_id") val stationId: Long,
     val name: String,
     val lat: Double,
     val lon: Double,
-    val capacity: Int,
+    val capacity: Int = 0,
     @SerialName("stationCode") val stationCode: String? = null,
 )

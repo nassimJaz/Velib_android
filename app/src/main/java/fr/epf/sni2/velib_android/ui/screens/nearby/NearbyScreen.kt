@@ -1,8 +1,5 @@
 package fr.epf.sni2.velib_android.ui.screens.nearby
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -47,9 +44,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.epf.sni2.velib_android.util.hasLocationPermission
+import fr.epf.sni2.velib_android.util.locationPermissions
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -83,14 +81,7 @@ fun NearbyScreen(
             if (!hasPermission) {
                 PermissionRequest(
                     modifier = Modifier.fillMaxSize(),
-                    onRequest = {
-                        permissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                            )
-                        )
-                    },
+                    onRequest = { permissionLauncher.launch(locationPermissions) },
                 )
             } else {
                 NearbyContent(viewModel = viewModel, onStationClick = onStationClick)
@@ -263,16 +254,6 @@ private fun IconText(icon: ImageVector, text: String) {
         )
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }
-}
-
-private fun hasLocationPermission(context: Context): Boolean {
-    val fine = ContextCompat.checkSelfPermission(
-        context, Manifest.permission.ACCESS_FINE_LOCATION,
-    ) == PackageManager.PERMISSION_GRANTED
-    val coarse = ContextCompat.checkSelfPermission(
-        context, Manifest.permission.ACCESS_COARSE_LOCATION,
-    ) == PackageManager.PERMISSION_GRANTED
-    return fine || coarse
 }
 
 private fun formatDistance(meters: Float): String {
