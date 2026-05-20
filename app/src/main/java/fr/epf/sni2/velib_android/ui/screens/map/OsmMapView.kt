@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +19,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import fr.epf.sni2.velib_android.R
 import fr.epf.sni2.velib_android.domain.model.Station
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -29,10 +33,21 @@ private const val PARIS_LAT = 48.8566
 private const val PARIS_LON = 2.3522
 private const val DEFAULT_ZOOM = 13.0
 
+// En dessous de ce zoom, les stations sont de petits points ; au-dessus, des pins complets
+private const val DETAIL_ZOOM = 15.0
+
 // Couleurs des marqueurs selon l'état de la station
 private val MARKER_AVAILABLE = Color.rgb(0, 178, 116)    // vert : vélos disponibles
 private val MARKER_RETURN_ONLY = Color.rgb(245, 124, 0)  // orange : dépôt seulement
 private val MARKER_UNAVAILABLE = Color.rgb(211, 47, 47)  // rouge : station indisponible
+
+private enum class StationCategory { AVAILABLE, RETURN_ONLY, UNAVAILABLE }
+
+private val categoryColors = mapOf(
+    StationCategory.AVAILABLE to MARKER_AVAILABLE,
+    StationCategory.RETURN_ONLY to MARKER_RETURN_ONLY,
+    StationCategory.UNAVAILABLE to MARKER_UNAVAILABLE,
+)
 
 @Composable
 fun OsmMapView(
@@ -53,10 +68,12 @@ fun OsmMapView(
         }
     }
 
-    // Icônes de marqueur préparées une fois pour chaque état
-    val availableIcon = remember { tintedPin(context, MARKER_AVAILABLE) }
-    val returnOnlyIcon = remember { tintedPin(context, MARKER_RETURN_ONLY) }
-    val unavailableIcon = remember { tintedPin(context, MARKER_UNAVAILABLE) }
+    // Icônes préparées une fois : un pin et un point pour chaque état
+    val pinIcons = remember { categoryColors.mapValues { tintedPin(context, it.value) } }
+    val dotIcons = remember { categoryColors.mapValues { coloredDot(context, it.value) } }
+
+    // Marqueurs gardés en mémoire pour pouvoir rebasculer leur icône au zoom
+    val markers = remember { mutableListOf<Pair<Marker, StationCategory>>() }
 
     // Overlay "point bleu" pour la position de l'utilisateur
     val locationOverlay = remember {
@@ -98,30 +115,73 @@ fun OsmMapView(
         onDispose { locationOverlay.disableMyLocation() }
     }
 
+    // Bascule point <-> pin quand le zoom franchit le seuil
+    DisposableEffect(mapView) {
+        var detailed = mapView.zoomLevelDouble >= DETAIL_ZOOM
+        val listener = object : MapListener {
+            override fun onZoom(event: ZoomEvent): Boolean {
+                val nowDetailed = event.zoomLevel >= DETAIL_ZOOM
+                if (nowDetailed != detailed) {
+                    detailed = nowDetailed
+                    markers.forEach { (marker, category) ->
+                        applyIcon(marker, category, detailed, pinIcons, dotIcons)
+                    }
+                    mapView.invalidate()
+                }
+                return false
+            }
+
+            override fun onScroll(event: ScrollEvent): Boolean = false
+        }
+        mapView.addMapListener(listener)
+        onDispose { mapView.removeMapListener(listener) }
+    }
+
     AndroidView(
         factory = { mapView },
         modifier = modifier,
         update = { view ->
             view.overlays.removeAll { it is Marker }
+            markers.clear()
+            val detailed = view.zoomLevelDouble >= DETAIL_ZOOM
             stations.forEach { station ->
+                val category = categoryOf(station)
                 val marker = Marker(view).apply {
                     position = GeoPoint(station.lat, station.lon)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = when {
-                        !station.isOperational -> unavailableIcon
-                        station.totalBikes == 0 -> returnOnlyIcon
-                        else -> availableIcon
-                    }
                     setOnMarkerClickListener { _, _ ->
                         onStationClick(station)
                         true
                     }
                 }
+                applyIcon(marker, category, detailed, pinIcons, dotIcons)
                 view.overlays.add(marker)
+                markers.add(marker to category)
             }
             view.invalidate()
         },
     )
+}
+
+private fun categoryOf(station: Station): StationCategory = when {
+    !station.isOperational -> StationCategory.UNAVAILABLE
+    station.totalBikes == 0 -> StationCategory.RETURN_ONLY
+    else -> StationCategory.AVAILABLE
+}
+
+private fun applyIcon(
+    marker: Marker,
+    category: StationCategory,
+    detailed: Boolean,
+    pinIcons: Map<StationCategory, Drawable>,
+    dotIcons: Map<StationCategory, Drawable>,
+) {
+    if (detailed) {
+        marker.icon = pinIcons[category]
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+    } else {
+        marker.icon = dotIcons[category]
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+    }
 }
 
 /** Charge le pin de station et le teinte avec la couleur d'état. */
@@ -129,6 +189,22 @@ private fun tintedPin(context: Context, color: Int): Drawable {
     val drawable = ContextCompat.getDrawable(context, R.drawable.ic_station_marker)!!.mutate()
     drawable.setTint(color)
     return drawable
+}
+
+/** Petit point coloré cerclé de blanc, utilisé quand la carte est dézoomée. */
+private fun coloredDot(context: Context, color: Int): Drawable {
+    val size = (13 * context.resources.displayMetrics.density).toInt()
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val center = size / 2f
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    paint.color = Color.WHITE
+    canvas.drawCircle(center, center, center, paint)
+    paint.color = color
+    canvas.drawCircle(center, center, center * 0.72f, paint)
+
+    return BitmapDrawable(context.resources, bitmap)
 }
 
 /** Dessine un point bleu type Google Maps : halo translucide, anneau blanc, point bleu. */
