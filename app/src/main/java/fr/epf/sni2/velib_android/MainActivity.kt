@@ -18,14 +18,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import fr.epf.sni2.velib_android.ui.navigation.Routes
 import fr.epf.sni2.velib_android.ui.screens.FavoritesScreen
 import fr.epf.sni2.velib_android.ui.screens.NearbyScreen
+import fr.epf.sni2.velib_android.ui.screens.detail.DetailScreen
 import fr.epf.sni2.velib_android.ui.screens.map.MapScreen
 import fr.epf.sni2.velib_android.ui.theme.VelibTheme
 
@@ -46,24 +49,29 @@ class MainActivity : ComponentActivity() {
                     Triple(Routes.NEARBY, "Proximité", Icons.Default.LocationOn),
                 )
 
+                // La barre du bas n'apparaît que sur les écrans principaux, pas sur le détail
+                val showBottomBar = currentDestination?.route in bottomNavItems.map { it.first }
+
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
-                            bottomNavItems.forEach { (route, label, icon) ->
-                                NavigationBarItem(
-                                    icon = { Icon(icon, contentDescription = label) },
-                                    label = { Text(label) },
-                                    selected = currentDestination?.hierarchy?.any { it.route == route } == true,
-                                    onClick = {
-                                        navController.navigate(route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
+                        if (showBottomBar) {
+                            NavigationBar {
+                                bottomNavItems.forEach { (route, label, icon) ->
+                                    NavigationBarItem(
+                                        icon = { Icon(icon, contentDescription = label) },
+                                        label = { Text(label) },
+                                        selected = currentDestination?.hierarchy?.any { it.route == route } == true,
+                                        onClick = {
+                                            navController.navigate(route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
                     }
@@ -73,9 +81,23 @@ class MainActivity : ComponentActivity() {
                         startDestination = Routes.MAP,
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable(Routes.MAP) { MapScreen() }
+                        composable(Routes.MAP) {
+                            MapScreen(
+                                onStationClick = { stationId ->
+                                    navController.navigate(Routes.detail(stationId))
+                                }
+                            )
+                        }
                         composable(Routes.FAVORITES) { FavoritesScreen() }
                         composable(Routes.NEARBY) { NearbyScreen() }
+                        composable(
+                            route = Routes.DETAIL,
+                            arguments = listOf(
+                                navArgument(Routes.ARG_STATION_ID) { type = NavType.StringType }
+                            ),
+                        ) {
+                            DetailScreen(onBack = { navController.navigateUp() })
+                        }
                     }
                 }
             }

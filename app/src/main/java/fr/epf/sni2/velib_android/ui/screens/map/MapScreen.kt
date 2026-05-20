@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun MapScreen(
+    onStationClick: (String) -> Unit,
     viewModel: MapViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -36,6 +37,7 @@ fun MapScreen(
             is MapUiState.Success -> OsmMapView(
                 stations = state.stations,
                 modifier = Modifier.fillMaxSize(),
+                onStationClick = { onStationClick(it.id) },
             )
 
             is MapUiState.Error -> Column(
