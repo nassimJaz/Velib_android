@@ -57,12 +57,19 @@ fun MapScreen(
                 CircularProgressIndicator()
             }
 
-            is MapUiState.Success -> OsmMapView(
-                stations = state.stations,
-                modifier = Modifier.fillMaxSize(),
-                showUserLocation = hasPermission,
-                onStationClick = { onStationClick(it.id) },
-            )
+            is MapUiState.Success -> {
+                OsmMapView(
+                    stations = state.stations,
+                    modifier = Modifier.fillMaxSize(),
+                    showUserLocation = hasPermission,
+                    onStationClick = { onStationClick(it.id) },
+                )
+                StationSearchBar(
+                    stations = state.stations,
+                    onResultClick = { onStationClick(it.id) },
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+            }
 
             is MapUiState.Error -> Column(
                 modifier = Modifier
