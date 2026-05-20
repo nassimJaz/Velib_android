@@ -15,10 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.ElectricBike
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.Place
@@ -31,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -57,6 +60,7 @@ fun DetailScreen(
     viewModel: DetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
     val title = (uiState as? DetailUiState.Success)?.station?.name ?: "Station"
 
     Scaffold(
@@ -66,6 +70,29 @@ fun DetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                    }
+                },
+                actions = {
+                    if (uiState is DetailUiState.Success) {
+                        IconButton(onClick = viewModel::toggleFavorite) {
+                            Icon(
+                                imageVector = if (isFavorite) {
+                                    Icons.Default.Favorite
+                                } else {
+                                    Icons.Default.FavoriteBorder
+                                },
+                                contentDescription = if (isFavorite) {
+                                    "Retirer des favoris"
+                                } else {
+                                    "Ajouter aux favoris"
+                                },
+                                tint = if (isFavorite) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    LocalContentColor.current
+                                },
+                            )
+                        }
                     }
                 },
             )
@@ -112,7 +139,7 @@ private fun StationDetailContent(station: Station) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.DirectionsBike,
+                icon = Icons.AutoMirrored.Filled.DirectionsBike,
                 value = station.totalBikes.toString(),
                 label = "vélos disponibles",
                 container = MaterialTheme.colorScheme.primaryContainer,
@@ -133,7 +160,7 @@ private fun StationDetailContent(station: Station) {
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                DetailRow(Icons.Default.DirectionsBike, "Vélos mécaniques", station.mechanicalBikes.toString())
+                DetailRow(Icons.AutoMirrored.Filled.DirectionsBike, "Vélos mécaniques", station.mechanicalBikes.toString())
                 DetailRow(Icons.Default.ElectricBike, "Vélos électriques", station.electricBikes.toString())
                 DetailRow(Icons.Default.Inventory2, "Capacité totale", "${station.capacity} bornes")
                 if (station.stationCode != null) {
