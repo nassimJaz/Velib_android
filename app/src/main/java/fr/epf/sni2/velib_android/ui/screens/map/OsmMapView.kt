@@ -49,6 +49,13 @@ private val categoryColors = mapOf(
     StationCategory.UNAVAILABLE to MARKER_UNAVAILABLE,
 )
 
+// Pins vectoriels avec contour blanc, un par état
+private val pinDrawableRes = mapOf(
+    StationCategory.AVAILABLE to R.drawable.ic_marker_available,
+    StationCategory.RETURN_ONLY to R.drawable.ic_marker_return_only,
+    StationCategory.UNAVAILABLE to R.drawable.ic_marker_unavailable,
+)
+
 @Composable
 fun OsmMapView(
     stations: List<Station>,
@@ -69,7 +76,7 @@ fun OsmMapView(
     }
 
     // Icônes préparées une fois : un pin et un point pour chaque état
-    val pinIcons = remember { categoryColors.mapValues { tintedPin(context, it.value) } }
+    val pinIcons = remember { pinDrawableRes.mapValues { ContextCompat.getDrawable(context, it.value)!! } }
     val dotIcons = remember { categoryColors.mapValues { coloredDot(context, it.value) } }
 
     // Marqueurs gardés en mémoire pour pouvoir rebasculer leur icône au zoom
@@ -182,13 +189,6 @@ private fun applyIcon(
         marker.icon = dotIcons[category]
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
     }
-}
-
-/** Charge le pin de station et le teinte avec la couleur d'état. */
-private fun tintedPin(context: Context, color: Int): Drawable {
-    val drawable = ContextCompat.getDrawable(context, R.drawable.ic_station_marker)!!.mutate()
-    drawable.setTint(color)
-    return drawable
 }
 
 /** Petit point coloré cerclé de blanc, utilisé quand la carte est dézoomée. */
