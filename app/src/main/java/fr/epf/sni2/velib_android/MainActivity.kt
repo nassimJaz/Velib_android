@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import fr.epf.sni2.velib_android.ui.navigation.Routes
 import fr.epf.sni2.velib_android.ui.screens.detail.DetailScreen
 import fr.epf.sni2.velib_android.ui.screens.favorites.FavoritesScreen
+import fr.epf.sni2.velib_android.ui.screens.history.HistoryScreen
 import fr.epf.sni2.velib_android.ui.screens.map.MapScreen
 import fr.epf.sni2.velib_android.ui.screens.nearby.NearbyScreen
 import fr.epf.sni2.velib_android.ui.theme.VelibTheme
@@ -51,6 +53,7 @@ class MainActivity : ComponentActivity() {
                     Triple(Routes.MAP, "Carte", Icons.Default.Map),
                     Triple(Routes.FAVORITES, "Favoris", Icons.Default.Favorite),
                     Triple(Routes.NEARBY, "Proximité", Icons.Default.LocationOn),
+                    Triple(Routes.HISTORY, "Trajets", Icons.Default.History),
                 )
 
                 // La barre du bas n'apparaît que sur les écrans principaux, pas sur le détail
@@ -108,6 +111,9 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Routes.detail(stationId))
                                 }
                             )
+                        }
+                        composable(Routes.HISTORY) {
+                            HistoryScreen()
                         }
                         composable(
                             route = Routes.DETAIL,

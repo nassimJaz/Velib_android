@@ -4,10 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [FavoriteStationEntity::class],
-    version = 1,
+    entities = [FavoriteStationEntity::class, TripEntity::class],
+    version = 2,
     exportSchema = false,
 )
 abstract class VelibDatabase : RoomDatabase() {
     abstract fun favoriteStationDao(): FavoriteStationDao
+    abstract fun tripDao(): TripDao
 }

@@ -5,6 +5,7 @@ object Routes {
     const val DETAIL = "detail/{stationId}"
     const val FAVORITES = "favorites"
     const val NEARBY = "nearby"
+    const val HISTORY = "history"
 
     const val ARG_STATION_ID = "stationId"
 
