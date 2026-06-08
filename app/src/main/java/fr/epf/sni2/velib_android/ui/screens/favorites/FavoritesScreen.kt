@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -46,36 +47,42 @@ fun FavoritesScreen(
     viewModel: FavoritesViewModel = hiltViewModel(),
 ) {
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Mes favoris") }) },
     ) { innerPadding ->
-        if (favorites.isEmpty()) {
-            EmptyFavorites(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            )
-        } else {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            // LazyColumn même quand vide, pour garder le geste "tirer pour rafraîchir" actif
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item {
-                    Text(
-                        text = "Liste consultable hors connexion",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                items(favorites, key = { it.station.id }) { favorite ->
-                    FavoriteCard(
-                        favorite = favorite,
-                        onClick = { onStationClick(favorite.station.id) },
-                    )
+                if (favorites.isEmpty()) {
+                    item {
+                        EmptyFavorites(modifier = Modifier.fillParentMaxSize())
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "Liste consultable hors connexion",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    items(favorites, key = { it.station.id }) { favorite ->
+                        FavoriteCard(
+                            favorite = favorite,
+                            onClick = { onStationClick(favorite.station.id) },
+                        )
+                    }
                 }
             }
         }
