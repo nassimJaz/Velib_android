@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -90,6 +91,7 @@ fun NearbyScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NearbyContent(
     viewModel: NearbyViewModel,
@@ -97,6 +99,7 @@ private fun NearbyContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val radius by viewModel.radiusMeters.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
         is NearbyUiState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -121,29 +124,42 @@ private fun NearbyContent(
 
         is NearbyUiState.Success -> {
             val visible = state.stations.filter { it.distanceMeters <= radius }
-            Column(Modifier.fillMaxSize()) {
-                RadiusSlider(
-                    radiusMeters = radius,
-                    count = visible.size,
-                    onRadiusChange = viewModel::setRadius,
-                )
-                if (visible.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text(
-                            text = "Aucune station dans ce rayon",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    RadiusSlider(
+                        radiusMeters = radius,
+                        count = visible.size,
+                        onRadiusChange = viewModel::setRadius,
+                    )
+                    // LazyColumn même quand vide, pour que le geste "tirer pour rafraîchir" reste actif
                     LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        items(visible, key = { it.station.id }) { item ->
-                            NearbyCard(
-                                item = item,
-                                onClick = { onStationClick(item.station.id) },
-                            )
+                        if (visible.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillParentMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "Aucune station dans ce rayon",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        } else {
+                            items(visible, key = { it.station.id }) { item ->
+                                NearbyCard(
+                                    item = item,
+                                    onClick = { onStationClick(item.station.id) },
+                                )
+                            }
                         }
                     }
                 }

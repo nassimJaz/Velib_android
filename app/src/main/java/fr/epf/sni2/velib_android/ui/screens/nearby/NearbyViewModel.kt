@@ -25,6 +25,9 @@ class NearbyViewModel @Inject constructor(
     private val _radiusMeters = MutableStateFlow(DEFAULT_RADIUS_METERS)
     val radiusMeters: StateFlow<Float> = _radiusMeters.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     fun setRadius(meters: Float) {
         _radiusMeters.value = meters
     }
@@ -33,19 +36,36 @@ class NearbyViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _uiState.value = NearbyUiState.Loading
-            val location = runCatching { locationProvider.getCurrentLocation() }.getOrNull()
-            if (location == null) {
+            fetch()
+        }
+    }
+
+    /** Re-géolocalise et recharge sans masquer la liste déjà affichée. */
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            fetch()
+            _isRefreshing.value = false
+        }
+    }
+
+    private suspend fun fetch() {
+        val location = runCatching { locationProvider.getCurrentLocation() }.getOrNull()
+        if (location == null) {
+            if (_uiState.value !is NearbyUiState.Success) {
                 _uiState.value = NearbyUiState.Error("Impossible de récupérer ta position GPS.")
-                return@launch
             }
-            stationRepository.getStations()
-                .onSuccess { stations ->
-                    _uiState.value = NearbyUiState.Success(stations.sortedByDistance(location))
-                }
-                .onFailure {
+            return
+        }
+        stationRepository.getStations()
+            .onSuccess { stations ->
+                _uiState.value = NearbyUiState.Success(stations.sortedByDistance(location))
+            }
+            .onFailure {
+                if (_uiState.value !is NearbyUiState.Success) {
                     _uiState.value = NearbyUiState.Error(it.message ?: "Erreur inconnue")
                 }
-        }
+            }
     }
 
     private fun List<Station>.sortedByDistance(from: Location): List<StationDistance> =
