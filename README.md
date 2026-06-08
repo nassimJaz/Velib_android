@@ -80,14 +80,6 @@ Pour générer simplement l'APK :
 
 ---
 
-## Captures
-
-<img src="screenshots/proximite.png" width="280" alt="Écran proximité" />
-
-*Écran « À proximité » — thème clair Vélib'.*
-
----
-
 ## Structure du projet
 
 ```
