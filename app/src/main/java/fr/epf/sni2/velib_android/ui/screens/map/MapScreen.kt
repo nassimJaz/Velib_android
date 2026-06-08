@@ -10,14 +10,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.epf.sni2.velib_android.ui.theme.glass
 import fr.epf.sni2.velib_android.util.hasLocationPermission
 import fr.epf.sni2.velib_android.util.locationPermissions
 
@@ -82,22 +84,32 @@ fun MapScreen(
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(16.dp)
+                        .glass(shape = RoundedCornerShape(24.dp))
+                        .padding(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    SmallFloatingActionButton(onClick = viewModel::refresh) {
+                    IconButton(onClick = viewModel::refresh) {
                         if (isRefreshing) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
                             )
                         } else {
-                            Icon(Icons.Default.Refresh, contentDescription = "Rafraîchir")
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Rafraîchir",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     }
                     if (hasPermission) {
-                        SmallFloatingActionButton(onClick = { recenterSignal++ }) {
-                            Icon(Icons.Default.MyLocation, contentDescription = "Me localiser")
+                        IconButton(onClick = { recenterSignal++ }) {
+                            Icon(
+                                Icons.Default.MyLocation,
+                                contentDescription = "Me localiser",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     }
                 }

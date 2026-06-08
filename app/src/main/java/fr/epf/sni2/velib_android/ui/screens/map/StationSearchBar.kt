@@ -62,6 +62,10 @@ fun StationSearchBar(
         modifier = modifier,
         expanded = expanded,
         onExpandedChange = { expanded = it },
+        colors = SearchBarDefaults.colors(
+            // Barre translucide "verre dépoli" qui laisse transparaître la carte
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.80f),
+        ),
         inputField = {
             SearchBarDefaults.InputField(
                 query = query,
