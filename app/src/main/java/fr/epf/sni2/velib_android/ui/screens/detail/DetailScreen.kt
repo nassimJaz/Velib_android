@@ -1,5 +1,10 @@
 package fr.epf.sni2.velib_android.ui.screens.detail
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +28,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalParking
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Tag
@@ -45,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -127,6 +134,7 @@ fun DetailScreen(
 
 @Composable
 private fun StationDetailContent(station: Station) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -153,6 +161,15 @@ private fun StationDetailContent(station: Station) {
                 container = MaterialTheme.colorScheme.secondaryContainer,
                 content = MaterialTheme.colorScheme.onSecondaryContainer,
             )
+        }
+
+        Button(
+            onClick = { openDirections(context, station.lat, station.lon) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(Icons.Default.Navigation, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Itinéraire")
         }
 
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -267,5 +284,15 @@ private fun formatLastReported(epochSeconds: Long): String {
         elapsed < 3600 -> "il y a ${elapsed / 60} min"
         elapsed < 86_400 -> "il y a ${elapsed / 3600} h"
         else -> "il y a ${elapsed / 86_400} j"
+    }
+}
+
+/** Ouvre l'application de cartographie sur un itinéraire vers la station. */
+private fun openDirections(context: Context, lat: Double, lon: Double) {
+    val uri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lon")
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "Aucune application de cartographie trouvée", Toast.LENGTH_SHORT).show()
     }
 }
