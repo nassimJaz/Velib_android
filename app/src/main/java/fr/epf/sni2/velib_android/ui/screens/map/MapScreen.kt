@@ -9,13 +9,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,8 +41,10 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    var recenterSignal by remember { mutableIntStateOf(0) }
     var hasPermission by remember { mutableStateOf(hasLocationPermission(context)) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -62,6 +71,7 @@ fun MapScreen(
                     stations = state.stations,
                     modifier = Modifier.fillMaxSize(),
                     showUserLocation = hasPermission,
+                    recenterSignal = recenterSignal,
                     onStationClick = { onStationClick(it.id) },
                 )
                 StationSearchBar(
@@ -69,6 +79,28 @@ fun MapScreen(
                     onResultClick = { onStationClick(it.id) },
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    SmallFloatingActionButton(onClick = viewModel::refresh) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Rafraîchir")
+                        }
+                    }
+                    if (hasPermission) {
+                        SmallFloatingActionButton(onClick = { recenterSignal++ }) {
+                            Icon(Icons.Default.MyLocation, contentDescription = "Me localiser")
+                        }
+                    }
+                }
             }
 
             is MapUiState.Error -> Column(

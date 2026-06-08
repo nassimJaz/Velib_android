@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,9 @@ private const val DEFAULT_ZOOM = 13.0
 // En dessous de ce zoom, les stations sont de petits points ; au-dessus, des pins complets
 private const val DETAIL_ZOOM = 15.0
 
+// Zoom appliqué quand on recentre sur l'utilisateur
+private const val USER_ZOOM = 16.0
+
 // Couleurs des marqueurs selon l'état de la station
 private val MARKER_AVAILABLE = Color.rgb(0, 178, 116)    // vert : vélos disponibles
 private val MARKER_RETURN_ONLY = Color.rgb(245, 124, 0)  // orange : dépôt seulement
@@ -61,6 +65,7 @@ fun OsmMapView(
     stations: List<Station>,
     modifier: Modifier = Modifier,
     showUserLocation: Boolean = false,
+    recenterSignal: Int = 0,
     onStationClick: (Station) -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -120,6 +125,22 @@ fun OsmMapView(
         }
         mapView.invalidate()
         onDispose { locationOverlay.disableMyLocation() }
+    }
+
+    // Recentre la carte sur la position de l'utilisateur quand le bouton est pressé
+    LaunchedEffect(recenterSignal) {
+        if (recenterSignal == 0) return@LaunchedEffect
+        val recenter = {
+            locationOverlay.myLocation?.let { point ->
+                mapView.controller.animateTo(point)
+                mapView.controller.setZoom(USER_ZOOM)
+            }
+        }
+        if (locationOverlay.myLocation != null) {
+            recenter()
+        } else {
+            locationOverlay.runOnFirstFix { mapView.post { recenter() } }
+        }
     }
 
     // Bascule point <-> pin quand le zoom franchit le seuil

@@ -18,6 +18,9 @@ class MapViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadStations()
     }
@@ -28,6 +31,21 @@ class MapViewModel @Inject constructor(
             repository.getStations()
                 .onSuccess { _uiState.value = MapUiState.Success(it) }
                 .onFailure { _uiState.value = MapUiState.Error(it.message ?: "Erreur inconnue") }
+        }
+    }
+
+    /** Recharge les dispos sans masquer la carte déjà affichée. */
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            repository.getStations()
+                .onSuccess { _uiState.value = MapUiState.Success(it) }
+                .onFailure {
+                    if (_uiState.value !is MapUiState.Success) {
+                        _uiState.value = MapUiState.Error(it.message ?: "Erreur inconnue")
+                    }
+                }
+            _isRefreshing.value = false
         }
     }
 }
