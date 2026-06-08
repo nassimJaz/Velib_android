@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -79,7 +83,10 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = Routes.MAP,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        // Fondu par défaut entre les onglets principaux
+                        enterTransition = { fadeIn(tween(250)) },
+                        exitTransition = { fadeOut(tween(250)) },
                     ) {
                         composable(Routes.MAP) {
                             MapScreen(
@@ -107,6 +114,9 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(
                                 navArgument(Routes.ARG_STATION_ID) { type = NavType.StringType }
                             ),
+                            // Le détail glisse depuis la droite, et ressort vers la droite au retour
+                            enterTransition = { slideIntoContainer(SlideDirection.Start, tween(300)) },
+                            popExitTransition = { slideOutOfContainer(SlideDirection.End, tween(300)) },
                         ) {
                             DetailScreen(onBack = { navController.navigateUp() })
                         }
