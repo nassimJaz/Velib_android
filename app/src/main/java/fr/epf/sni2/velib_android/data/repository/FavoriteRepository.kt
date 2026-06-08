@@ -27,6 +27,18 @@ class FavoriteRepository @Inject constructor(
             dao.insert(station.toEntity())
         }
     }
+
+    /**
+     * Met à jour les données (vélos, places, horodatage) des stations déjà en favori
+     * à partir d'une liste fraîche. Renvoie le nombre de favoris rafraîchis.
+     */
+    suspend fun refreshFavorites(freshStations: List<Station>): Int {
+        val favoriteIds = dao.getFavoriteIds().toSet()
+        if (favoriteIds.isEmpty()) return 0
+        val toUpdate = freshStations.filter { it.id in favoriteIds }
+        toUpdate.forEach { dao.insert(it.toEntity()) }
+        return toUpdate.size
+    }
 }
 
 private fun FavoriteStationEntity.toFavoriteStation(): FavoriteStation = FavoriteStation(

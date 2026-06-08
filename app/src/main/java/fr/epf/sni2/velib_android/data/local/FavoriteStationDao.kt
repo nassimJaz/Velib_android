@@ -18,6 +18,9 @@ interface FavoriteStationDao {
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_stations WHERE id = :id)")
     suspend fun exists(id: String): Boolean
 
+    @Query("SELECT id FROM favorite_stations")
+    suspend fun getFavoriteIds(): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(station: FavoriteStationEntity)
 
